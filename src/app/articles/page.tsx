@@ -6,19 +6,21 @@ import { fetchArticleByQuery } from "@/lib/query/fetch-articles";
 import Link from "next/link";
 import AllArticlesPageSkeleton from "@/components/articles/all-articles-page-skeleton";
 
+// If using Clerk inside server components:
+// export const runtime = "nodejs"; // Optional: Uncomment if needed
+
+const ITEMS_PER_PAGE = 3;
+
 type SearchPageProps = {
-  searchParams: { search?: string; page?: string };
+  searchParams?: {
+    search?: string;
+    page?: string;
+  };
 };
 
-const ITEMS_PER_PAGE = 3; // Number of items per page
-
-const page = async ({
-  searchParams,
-}: {
-  searchParams: Promise<SearchPageProps>;
-}) => {
-  const searchText = (await searchParams.search) || "";
-  const currentPage = (await Number(searchParams.page)) || 1;
+const ArticlesPage = async ({ searchParams }: SearchPageProps) => {
+  const searchText = searchParams?.search || "";
+  const currentPage = Number(searchParams?.page) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
   const take = ITEMS_PER_PAGE;
 
@@ -33,20 +35,20 @@ const page = async ({
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             All Articles
           </h1>
+
           {/* Search Bar */}
-          <Suspense>
-            <ArticleSearchInput />
-          </Suspense>
+          <ArticleSearchInput />
         </div>
-        {/* All article page  */}
+
+        {/* Articles List */}
         <Suspense fallback={<AllArticlesPageSkeleton />}>
           <AllArticlesPage articles={articles} />
         </Suspense>
-        {/* <AllArticlesPageSkeleton/> */}
+
         {/* Pagination */}
         <div className="mt-12 flex justify-center gap-2">
           {/* Prev Button */}
-          <Link href={`?search=${searchText}&page=${currentPage - 1}`} passHref>
+          <Link href={`?search=${searchText}&page=${currentPage - 1}`}>
             <Button variant="ghost" size="sm" disabled={currentPage === 1}>
               ← Prev
             </Button>
@@ -54,15 +56,9 @@ const page = async ({
 
           {/* Page Numbers */}
           {Array.from({ length: totalPages }).map((_, index) => (
-            <Link
-              key={index}
-              href={`?search=${searchText}&page=${index + 1}`}
-              passHref
-            >
+            <Link key={index} href={`?search=${searchText}&page=${index + 1}`}>
               <Button
-                variant={`${
-                  currentPage === index + 1 ? "destructive" : "ghost"
-                }`}
+                variant={currentPage === index + 1 ? "destructive" : "ghost"}
                 size="sm"
                 disabled={currentPage === index + 1}
               >
@@ -72,7 +68,7 @@ const page = async ({
           ))}
 
           {/* Next Button */}
-          <Link href={`?search=${searchText}&page=${currentPage + 1}`} passHref>
+          <Link href={`?search=${searchText}&page=${currentPage + 1}`}>
             <Button
               variant="ghost"
               size="sm"
@@ -87,4 +83,4 @@ const page = async ({
   );
 };
 
-export default page;
+export default ArticlesPage;
